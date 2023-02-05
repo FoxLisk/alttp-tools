@@ -2,6 +2,7 @@ let ADDRESSES = {
     'arrows': 0x377,
     'bombs': 0x343,
     'rupees': 0x360, // N.B. this isn't enough to represent higher values of rupees but we don't need to for our purposes 
+    'rupee_disp': 0x362,
     'mushroom': 0x344, // 0 none, 1 shroom, 2 powder
     'max_health': 0x36C,
     'current_health': 0x36D, // set this to what player will load in with
@@ -121,6 +122,12 @@ let address_to_value = function(name) {
         return [[ADDRESSES[name], v]];
     };
 };
+let rupee_updates = function(v) {
+    return [
+        [ADDRESSES['rupees'], v],
+        [ADDRESSES['rupee_disp'], v],
+    ];
+}
 
 let sanc_heart_updates = function(v) {
     let hps = v ? 7 : 6;
@@ -189,7 +196,7 @@ function form_to_updates(form) {
             numeric, a => a >= 0 && a <= 5, address_to_value('bombs')
         )],
         ['rupees', new InputToStuff(
-            numeric,  a => a >= 0 && a <= 150, address_to_value('rupees')
+            numeric,  a => a >= 0 && a <= 150, rupee_updates,
         )],
         ['mushroom', new InputToStuff(
             checked, () => true, address_to_value('mushroom')
