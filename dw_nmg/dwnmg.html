@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <title>Dark World NMG SRAM</title>
+        <script defer type="text/javascript" src="dwnmg.js"></script>
+    </head>
+    <body>
+        <p>Use this form to customize the loadout for your <a href="https://www.speedrun.com/alttpce?h=Dark_World_NMG&x=jdzw5mgd">Dark World NMG</a> save.<p>
+        <form>
+            <div>
+                <input type="number" name="arrows" min="0" max="15" value="10"/>Arrow count (0-15)
+            </div>
+            <div>
+                <input type="number" name="bombs" min="0" max="5" value="1"/>Bomb count (0-15)
+            </div>
+            <div>
+                <input type="number" name="rupees" min="0" max="150" value="110"/>Rupee count (0-150)
+            </div>
+            <p>Safeties</p>
+            <div>
+                <input type="checkbox" name="mushroom" id="mushroom"/><label for="mushroom">Mushroom</label>
+            </div>
+            <div>
+                <input type="checkbox" name="sanc_heart" id="sanc_heart" checked/><label
+                for="sanc_heart">Sanc heart</label>
+            </div>
+            <div>
+                <input type="checkbox" name="bug_net" id="bug_net" /><label
+                    for="bug_net">Bug Net</label>
+            </div>
+            <div>
+                <label for="tavern_bottle_select">Tavern Bottle</label>
+                <select name="tavern_bottle" id="tavern_bottle_select">
+                    <option value="no">No bottle</option>
+                    <option value="empty">Empty</option>
+                    <option value="fairy">Fairy</option>
+                    <option value="bee">Bee</option>
+                    <option value="red">Red potion</option>
+                </select>
+            </div>
+            <div>
+                <label for="vendor_bottle_select">Vendor Bottle</label>
+                <select name="vendor_bottle" id="vendor_bottle_select">
+                    <option value="no">No bottle</option>
+                    <option value="empty">Empty</option>
+                    <option value="fairy">Fairy</option>
+                    <option value="bee">Bee</option>
+                    <option value="red">Red potion</option>
+                </select>
+            </div>
+            <div>
+                <button type="button">download</button>
+            </div>
+        </form>
+    </body>
+</html>
