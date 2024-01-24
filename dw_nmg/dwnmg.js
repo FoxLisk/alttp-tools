@@ -9,6 +9,7 @@ let ADDRESSES = {
     'bug_net': 0x34D,
     'bottle_1': 0x35C,
     'bottle_2': 0x35D,
+    'heart_refill' : 0x372,
     'progress_flags': 0x3C9, // see disasm, what we want this for is just setting bottle purchased
     ROOMS: {
         // N.B. low byte, contains ccccqqqq
@@ -146,6 +147,11 @@ let sanc_heart_updates = function(v) {
     ];
 }
 
+let refill_updates = function(v) {
+    let refill = v ? 0xA0 : 0x0;
+    return[[ADDRESSES['heart_refill'], v]];
+}
+
 function bottle_value(bottle) {
     return {
         no: 0,
@@ -203,6 +209,9 @@ function form_to_updates(form) {
         )],
         ['sanc_heart', new InputToStuff(
             checked, () => true, sanc_heart_updates,
+        )],
+        ['heart_refill', new InputToStuff(
+            checked, () => true, refill_updates,
         )],
         ['bug_net', new InputToStuff(
             checked, () => true, address_to_value('bug_net')
