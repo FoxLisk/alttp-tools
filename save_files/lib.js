@@ -1,4 +1,4 @@
-let ADDRESSES = {
+const ADDRESSES = {
     'arrows': 0x377,
     'bombs': 0x343,
     'rupees': 0x360, // N.B. this isn't enough to represent higher values of rupees but we don't need to for our purposes 
@@ -16,7 +16,14 @@ let ADDRESSES = {
         'sanc': 0x24,
         'tavern': 0x206,
     }
-}
+};
+
+const SPAWN_IN_HEALTH = {
+    7: 5,
+    6: 4,
+    10: 6,
+    11: 7,
+};
 
 function sixteen_bit(low, high) {
     return low | (high << 8);
@@ -61,7 +68,6 @@ function calculate_checksum(bytes, offset) {
     );
     return (0x15A5A - sum) & 0xFFFF;
 }
-
 function alter_slot(bytes, memory_adjustments, offset) {
     console.log('altering: adjustments: ', memory_adjustments);
     for (const [loc, val] of memory_adjustments) {
@@ -86,6 +92,11 @@ class InputToStuff {
     parse_input;
     validate_value;
     produce_updates;
+
+    /// parse_input takes an `<input>` element and returns a value to be used
+    /// validate() validates the value
+    /// produce updates takes the value and returns 
+    /// a list of zero or more 2-tuples of (address, value_to_write)
     constructor(parse_input, validate, produce_updates) {
         this.parse_input = parse_input;
         this.validate = validate;
@@ -113,8 +124,12 @@ class InputToStuff {
 
 }
 
+/// handy parse_input functions
 let numeric = i => parseInt(i.value, 10);
 let checked = i => +i.checked;
+let selected = i => i.value;
+
+/// sets given named address to given value
 let address_to_value = function(name) {
     return function(v) {
         if (ADDRESSES[name] === undefined) {
@@ -123,33 +138,29 @@ let address_to_value = function(name) {
         return [[ADDRESSES[name], v]];
     };
 };
+
 let rupee_updates = function(v) {
     return [
         [ADDRESSES['rupees'], v],
         [ADDRESSES['rupee_disp'], v],
     ];
 }
-
-let sanc_heart_updates = function(v) {
-    let hps = v ? 7 : 6;
-    let cur_health;
-    // game stores hp as hp*8
-    if (hps === 7) {
-        cur_health = 5 * 0x8;
-    } else {
-        cur_health = 4 * 0x8;
-    }
-    let max_health = hps * 0x8;
-    return [
-        [ADDRESSES['max_health'], max_health],
-        [ADDRESSES.ROOMS['sanc'], 0xFFFF & (v << 4)],
-        [ADDRESSES['current_health'], cur_health], 
-    ];
-}
-
-let refill_updates = function(v) {
-    let refill = v ? 0xA0 : 0x0;
-    return[[ADDRESSES['heart_refill'], v]];
+let sanc_heart_updates = function(hps_without) {
+    return function(v) {
+        let hps = hps_without;
+        if (v) {
+            hps++;
+        }
+        let cur_health;
+        // game stores hp as hp*8
+        cur_health = SPAWN_IN_HEALTH[cur_health] & 0x8;
+        let max_health = hps * 0x8;
+        return [
+            [ADDRESSES['max_health'], max_health],
+            [ADDRESSES.ROOMS['sanc'], 0xFFFF & (v << 4)],
+            [ADDRESSES['current_health'], cur_health], 
+        ];
+    };
 }
 
 function bottle_value(bottle) {
@@ -192,29 +203,43 @@ function bottle_updates(tavern, vendor) {
     return updates;
 }
 
+let refill_updates = function(v) {
+    let refill = v ? 0xA0 : 0x0;
+    return[[ADDRESSES['heart_refill'], v]];
+}
+
+let mushroom_updates = function(v) {
+    if(v === 'mushroom') {
+        return [[ADDRESSES['mushroom'], 1]];
+    } else if( v === 'powder') {
+        return [[ADDRESSES['mushroom'], 2]];
+    } else {
+        return [[ADDRESSES['mushroom'], 0]];
+    }
+}
 
 function form_to_updates(form) {
     let fields = [
         ['arrows', new InputToStuff(
-            numeric, a => a >= 0 && a <= 15, address_to_value('arrows')
+            numeric, a => a >= 0 && a <= 30, address_to_value('arrows')
         )],
         ['bombs', new InputToStuff(
             numeric, a => a >= 0 && a <= 5, address_to_value('bombs')
         )],
         ['rupees', new InputToStuff(
-            numeric,  a => a >= 0 && a <= 150, rupee_updates,
-        )],
-        ['mushroom', new InputToStuff(
-            checked, () => true, address_to_value('mushroom')
+            numeric,  a => a >= 0 && a <= 250, rupee_updates,
         )],
         ['sanc_heart', new InputToStuff(
-            checked, () => true, sanc_heart_updates,
+            checked, () => true, sanc_heart_updates(10),
         )],
         ['heart_refill', new InputToStuff(
             checked, () => true, refill_updates,
         )],
         ['bug_net', new InputToStuff(
             checked, () => true, address_to_value('bug_net')
+        )],
+        ['mushroom', new InputToStuff(
+            selected, () => true, mushroom_updates
         )],
     ];
     var updates = [];
@@ -242,7 +267,8 @@ function form_to_updates(form) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    let default_save = await fetch('dwnmg.srm')
+    let save_url = document.querySelector('body').dataset['srmUrl'];
+    let default_save = await fetch(save_url)
         .then(resp => resp.arrayBuffer())
         .then(arr => new Uint8Array(arr))
         .catch(e => {
@@ -271,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let a = document.createElement('a');
         let url = URL.createObjectURL(data);
         a.href = url;
-        a.download = 'dwnmg.srm';
+        a.download = save_url;
         a.click();
     });
 });
