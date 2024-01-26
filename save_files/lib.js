@@ -19,8 +19,8 @@ const ADDRESSES = {
 };
 
 const SPAWN_IN_HEALTH = {
-    7: 5,
     6: 4,
+    7: 5,
     10: 6,
     11: 7,
 };
@@ -90,16 +90,13 @@ function alter_all_slots(bytes, adjustments) {
 
 class InputToStuff {
     parse_input;
-    validate_value;
     produce_updates;
 
     /// parse_input takes an `<input>` element and returns a value to be used
-    /// validate() validates the value
     /// produce updates takes the value and returns 
     /// a list of zero or more 2-tuples of (address, value_to_write)
-    constructor(parse_input, validate, produce_updates) {
+    constructor(parse_input, produce_updates) {
         this.parse_input = parse_input;
-        this.validate = validate;
         this.produce_updates = produce_updates;
     }
 
@@ -109,11 +106,7 @@ class InputToStuff {
         try {
             value = this.parse_input(input);
         } catch (e) {
-            return {error: `cannot parse input: ${e}`};
-        }
-        let valid = this.validate(value);
-        if (!valid) {
-            return {error: 'input invalid'};
+            return {error: `Invalid input: ${e}`};
         }
         let updates = this.produce_updates(value);
         if (!updates) {
@@ -125,9 +118,22 @@ class InputToStuff {
 }
 
 /// handy parse_input functions
-let numeric = i => parseInt(i.value, 10);
+function numeric(i) {
+    let value = parseInt(i.value, 10);
+    if (i.min && value < parseInt(i.min, 10)) {
+        throw new Error('below minimum');
+    }
+    if (i.max && value > parseInt(i.max, 10)) {
+        throw new Error('above maximum');
+    }
+    return value;
+}
 let checked = i => +i.checked;
 let selected = i => i.value;
+function sanc_heart_parse(i) {
+    let hps_without = parseInt(i.dataset['hpsWithout'], 10);
+    return [hps_without, +i.checked];
+}
 
 /// sets given named address to given value
 let address_to_value = function(name) {
@@ -145,22 +151,19 @@ let rupee_updates = function(v) {
         [ADDRESSES['rupee_disp'], v],
     ];
 }
-let sanc_heart_updates = function(hps_without) {
-    return function(v) {
-        let hps = hps_without;
-        if (v) {
-            hps++;
-        }
-        let cur_health;
-        // game stores hp as hp*8
-        cur_health = SPAWN_IN_HEALTH[cur_health] & 0x8;
-        let max_health = hps * 0x8;
-        return [
-            [ADDRESSES['max_health'], max_health],
-            [ADDRESSES.ROOMS['sanc'], 0xFFFF & (v << 4)],
-            [ADDRESSES['current_health'], cur_health], 
-        ];
-    };
+let sanc_heart_updates = function([hps_without, v]) {
+    let hps = hps_without;
+    if (v) {
+        hps++;
+    }
+    // game stores hp as hp*8
+    let cur_health = SPAWN_IN_HEALTH[hps] * 0x8;
+    let max_health = hps * 0x8;
+    return [
+        [ADDRESSES['max_health'], max_health],
+        [ADDRESSES.ROOMS['sanc'], 0xFFFF & (v << 4)],
+        [ADDRESSES['current_health'], cur_health], 
+    ];
 }
 
 function bottle_value(bottle) {
@@ -221,25 +224,25 @@ let mushroom_updates = function(v) {
 function form_to_updates(form) {
     let fields = [
         ['arrows', new InputToStuff(
-            numeric, a => a >= 0 && a <= 30, address_to_value('arrows')
+            numeric, address_to_value('arrows')
         )],
         ['bombs', new InputToStuff(
-            numeric, a => a >= 0 && a <= 5, address_to_value('bombs')
+            numeric, address_to_value('bombs')
         )],
         ['rupees', new InputToStuff(
-            numeric,  a => a >= 0 && a <= 250, rupee_updates,
+            numeric, rupee_updates,
         )],
         ['sanc_heart', new InputToStuff(
-            checked, () => true, sanc_heart_updates(10),
+            sanc_heart_parse, sanc_heart_updates,
         )],
         ['heart_refill', new InputToStuff(
-            checked, () => true, refill_updates,
+            checked, refill_updates,
         )],
         ['bug_net', new InputToStuff(
-            checked, () => true, address_to_value('bug_net')
+            checked, address_to_value('bug_net')
         )],
         ['mushroom', new InputToStuff(
-            selected, () => true, mushroom_updates
+            selected, mushroom_updates
         )],
     ];
     var updates = [];
