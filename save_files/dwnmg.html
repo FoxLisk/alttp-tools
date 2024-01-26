@@ -1,10 +1,11 @@
 <html>
     <head>
         <title>Dark World NMG SRAM</title>
-        <script defer type="text/javascript" src="dwnmg.js"></script>
+        <script defer type="text/javascript" src="lib.js"></script>
     </head>
-    <body>
+    <body data-srm-url="dwnmg.srm">
         <p>Use this form to customize the loadout for your <a href="https://www.speedrun.com/alttpce?h=Dark_World_NMG&x=jdzw5mgd">Dark World NMG</a> save.<p>
+        <p>There is also a <a href="/dirtythirty.html">Dirty Thirty save generator</a></p>
         <form>
             <div>
                 <input type="number" name="arrows" min="0" max="15" value="10"/>Arrow count (0-15)
@@ -17,10 +18,14 @@
             </div>
             <p>Safeties</p>
             <div>
-                <input type="checkbox" name="mushroom" id="mushroom"/><label for="mushroom">Mushroom</label>
+                <label for="mushroom_select">Mushroom</label>
+                <select name="mushroom" id="mushroom_select">
+                    <option value="no">None</option>
+                    <option value="mushroom">Mushroom</option>
+                </select>
             </div>
             <div>
-                <input type="checkbox" name="sanc_heart" id="sanc_heart" checked/><label
+                <input type="checkbox" name="sanc_heart" id="sanc_heart" data-hps-without="6" checked/><label
                 for="sanc_heart">Sanc heart</label>
             </div>
             <div>
